@@ -1,13 +1,37 @@
 package com.example.restyle.ui.screen
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,9 +41,30 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.restyle.ui.photodetail.PhotoDetailScreen
+import com.example.restyle.ui.pickup.PickupLocationScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
+import com.example.restyle.ui.screen.HomeViewModel
+import com.example.restyle.data.model.Photo
+import androidx.compose.foundation.Image
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.layout.ContentScale
+import com.example.restyle.ui.screen.MyItemsListScreen
+import androidx.compose.runtime.LaunchedEffect
+import com.example.restyle.ui.marketplace.MarketplaceScreen
+import com.example.restyle.ui.marketplace.ItemDetailScreen
+import com.example.restyle.ui.marketplace.MarketplaceViewModel
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.Button
 
 
 @Composable
@@ -30,30 +75,153 @@ fun HomeScreen() {
         navController = navController,
         startDestination = "home"
     ) {
+        // Route: Home
         composable("home") {
             HomeContent(navController = navController)
         }
 
-        // upload route with type argument
+        // Route: Upload Photo
         composable("upload/{type}") { backStackEntry ->
             val type = backStackEntry.arguments?.getString("type") ?: "Resell"
+
             UploadPhotoScreen(
                 featureType = type,
                 onBackClick = { navController.popBackStack() },
-                onResult = { _, _ ->
-                    // default behavior after a photo is selected/taken:
-                    // close upload screen and return to previous screen.
-                    // Replace this with navigation to detail/pricing screen if needed.
-                    navController.popBackStack()
+                onPhotoSelected = { uri ->
+                    val encodedUri = Uri.encode(uri.toString())
+                    navController.navigate("photo_detail/$encodedUri/$type")
                 }
             )
+        }
+
+        composable(
+            route = "photo_detail/{imageUri}/{category}",
+            arguments = listOf(
+                navArgument("imageUri") { type = NavType.StringType },
+                navArgument("category") {
+                    type = NavType.StringType
+                    defaultValue = "Resell"
+                }
+            )
+        ) { backStackEntry ->
+            val imageUriString = backStackEntry.arguments?.getString("imageUri")
+            val category = backStackEntry.arguments?.getString("category") ?: "Resell"
+            val imageUri = imageUriString?.let { Uri.parse(it) }
+
+            PhotoDetailScreen(
+                imageUri = imageUri,
+                category = category,
+                onNavigateBack = {
+                    navController.popBackStack("home", inclusive = false)
+                },
+                onNavigateToPickup = { uri, title, desc, cat ->
+                    val encodedUri = Uri.encode(uri.toString())
+                    val encodedTitle = Uri.encode(title)
+                    val encodedDesc = Uri.encode(desc)
+                    navController.navigate("pickup_location/$encodedUri/$encodedTitle/$encodedDesc/$cat")
+                }
+            )
+        }
+
+        composable(
+            route = "pickup_location/{imageUri}/{title}/{description}/{category}",
+            arguments = listOf(
+                navArgument("imageUri") { type = NavType.StringType },
+                navArgument("title") { type = NavType.StringType },
+                navArgument("description") { type = NavType.StringType },
+                navArgument("category") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val imageUriString = backStackEntry.arguments?.getString("imageUri")
+            val title = backStackEntry.arguments?.getString("title") ?: ""
+            val description = backStackEntry.arguments?.getString("description") ?: ""
+            val category = backStackEntry.arguments?.getString("category") ?: "Donate"
+            val imageUri = imageUriString?.let { Uri.parse(it) }
+
+            PickupLocationScreen(
+                imageUri = imageUri,
+                title = title,
+                description = description,
+                category = category,
+                onNavigateBack = {
+                    navController.popBackStack("home", inclusive = false)
+                }
+            )
+        }
+        // Route: My-items
+        composable("my_items_list") {
+            MyItemsListScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onItemClick = { photo ->
+                }
+            )
+        }
+        // Route: Marketplace
+        composable("marketplace") {
+            MarketplaceScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onItemClick = { photo ->
+                    navController.navigate("item_detail/${photo.id}")
+                }
+            )
+        }
+        // Route: Item Detail
+        composable(
+            route = "item_detail/{itemId}",
+            arguments = listOf(
+                navArgument("itemId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val itemId = backStackEntry.arguments?.getString("itemId") ?: ""
+
+            val marketplaceViewModel: MarketplaceViewModel = viewModel()
+            val marketplaceItems by marketplaceViewModel.marketplaceItems.collectAsState()
+            val selectedItem = marketplaceItems.find { it.id == itemId }
+
+            if (selectedItem != null) {
+                ItemDetailScreen(
+                    photo = selectedItem,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            } else {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Item not found")
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = { navController.popBackStack() }) {
+                            Text("Go Back")
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeContent(navController: NavController) {
+fun HomeContent(
+    navController: NavController,
+    viewModel: HomeViewModel = viewModel()
+) {
+    val myResellItems by viewModel.myResellItems.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.refreshItems()
+    }
+
     Scaffold(
         topBar = {
             TopBar()
@@ -66,8 +234,13 @@ fun HomeContent(navController: NavController) {
                 .background(Color(0xFFF5F5F5))
                 .padding(16.dp)
         ) {
-            // Loyalty Card
-            LoyaltyCard()
+            MyItemsSection(
+                items = myResellItems,
+                isLoading = isLoading,
+                onViewAllClick = {
+                    navController.navigate("my_items_list")
+                }
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -127,148 +300,169 @@ fun TopBar() {
 }
 
 @Composable
-fun LoyaltyCard() {
+fun MyItemsSection(
+    items: List<Photo>,
+    isLoading: Boolean,
+    onViewAllClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp),
-        shape = RoundedCornerShape(24.dp),
+            .height(150.dp),
+        shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF6FCF97)
+            containerColor = Color.White
         )
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp)
+                .padding(20.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .offset(x = 200.dp, y = (-20).dp)
-                    .background(
-                        color = Color.White.copy(alpha = 0.1f),
-                        shape = CircleShape
-                    )
-            )
-
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .offset(x = 250.dp, y = 80.dp)
-                    .background(
-                        color = Color.White.copy(alpha = 0.1f),
-                        shape = CircleShape
-                    )
-            )
-
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            if (isLoading) {
+                // Loading State
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Clothing Collection",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowRight,
-                        contentDescription = "Details",
-                        tint = Color.White,
-                        modifier = Modifier.size(28.dp)
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(40.dp),
+                        color = Color(0xFF6FCF97)
                     )
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(90.dp)
-                            .background(
-                                color = Color.White.copy(alpha = 0.25f),
-                                shape = RoundedCornerShape(20.dp)
-                            ),
-                        contentAlignment = Alignment.Center
+            } else {
+                Column {
+                    // Header
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "👕",
-                            fontSize = 50.sp
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "My Items",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2D2D2D)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "🏪",
+                                fontSize = 20.sp
+                            )
+                        }
+
+                        if (items.isNotEmpty()) {
+                            TextButton(onClick = onViewAllClick) {
+                                Text(
+                                    text = "View All",
+                                    color = Color(0xFF6FCF97),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowRight,
+                                    contentDescription = "View All",
+                                    tint = Color(0xFF6FCF97)
+                                )
+                            }
+                        }
                     }
 
-                    Spacer(modifier = Modifier.width(20.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    Column {
-                        Text(
-                            text = "12 Items",
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "Ready to recycle",
-                            fontSize = 14.sp,
-                            color = Color.White.copy(alpha = 0.85f),
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Your Impact",
-                            fontSize = 11.sp,
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
-                        Text(
-                            text = "Henry Moore",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White
-                        )
-                    }
-
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color.White.copy(alpha = 0.25f)
-                    ) {
+                    if (items.isEmpty()) {
+                        // Empty State
                         Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "🌱",
-                                fontSize = 18.sp
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "25,750",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .background(
+                                        color = Color(0xFFF5F5F5),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(text = "📦", fontSize = 30.sp)
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column {
+                                Text(
+                                    text = "No items yet",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF2D2D2D)
+                                )
+                                Text(
+                                    text = "Start selling your items",
+                                    fontSize = 13.sp,
+                                    color = Color(0xFF9E9E9E)
+                                )
+                            }
+                        }
+                    } else {
+                        // Items Preview (3 photos + count)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Show first 3 photos
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items.take(3).forEach { photo ->
+                                    Card(
+                                        modifier = Modifier.size(60.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        elevation = CardDefaults.cardElevation(2.dp)
+                                    ) {
+                                        Image(
+                                            painter = rememberAsyncImagePainter(photo.imageUrl),
+                                            contentDescription = photo.title,
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            // Item Count & Info
+                            Column {
+                                Text(
+                                    text = "${items.size} Item${if (items.size > 1) "s" else ""}",
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF2D2D2D)
+                                )
+
+                                // Calculate total value
+                                val totalValue = items.sumOf { it.price }
+                                if (totalValue > 0) {
+                                    Text(
+                                        text = "Rp ${formatPrice(totalValue)}",
+                                        fontSize = 14.sp,
+                                        color = Color(0xFF6FCF97),
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
         }
     }
+}
+
+fun formatPrice(price: Long): String {
+    return price.toString().reversed().chunked(3).joinToString(".").reversed()
 }
 
 @Composable
@@ -284,7 +478,7 @@ fun FeatureGrid(navController: NavController) {
                 backgroundColor = Color(0xFF6FCF97),
                 textColor = Color.White,
                 modifier = Modifier.weight(1f),
-                onClick = { /* Navigate to Marketplace */ }
+                onClick = { navController.navigate("marketplace")}
             )
             FeatureButton(
                 title = "Resell",
@@ -413,7 +607,7 @@ fun FeatureButton(
 @Composable
 fun HomeScreenPreview() {
     MaterialTheme {
-        // Use HomeContent with a rememberNavController in preview to avoid runtime nav host in preview
-        HomeContent(navController = rememberNavController())
+        val navController = rememberNavController()
+        HomeContent(navController = navController)
     }
 }

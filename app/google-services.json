@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "116808486938",
+    "project_id": "restyle-54df7",
+    "storage_bucket": "restyle-54df7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:116808486938:android:3e338f493e3a7d895a01a3",
+        "android_client_info": {
+          "package_name": "com.example.restyle"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAd0yoiREQ51yANPxPQ2ESIESfUVN_MSBM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -31,6 +31,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import java.io.File
+import java.io.FileOutputStream
 import java.io.InputStream
 
 // Warna Hijau Gelap Theme
@@ -52,7 +55,7 @@ enum class Action {
 fun UploadPhotoScreen(
     featureType: String = "Resell", // "Resell", "Donate", atau "Recycle"
     onBackClick: () -> Unit = {},
-    onResult: (bitmap: Bitmap?, uri: Uri?) -> Unit = { _, _ -> } // callback saat foto diambil/diupload
+    onPhotoSelected: (Uri) -> Unit = {} // BARU: callback untuk navigate ke PhotoDetail
 ) {
     val context = LocalContext.current
 
@@ -63,14 +66,40 @@ fun UploadPhotoScreen(
     // Pending action (dipakai saat permission diminta)
     var pendingAction by remember { mutableStateOf<Action?>(null) }
 
+    // Helper function: convert Bitmap to Uri
+    fun bitmapToUri(bitmap: Bitmap): Uri? {
+        return try {
+            val file = File(context.cacheDir, "temp_photo_${System.currentTimeMillis()}.jpg")
+            val outputStream = FileOutputStream(file)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+            outputStream.flush()
+            outputStream.close()
+            FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.provider",
+                file
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
     // Launcher untuk mengambil foto: TakePicturePreview -> mengembalikan Bitmap langsung
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap: Bitmap? ->
         if (bitmap != null) {
             selectedBitmap = bitmap
-            selectedUri = null
-            onResult(bitmap, null)
+            // Convert bitmap to URI
+            val uri = bitmapToUri(bitmap)
+            if (uri != null) {
+                selectedUri = uri
+                // Langsung navigate ke PhotoDetail
+                onPhotoSelected(uri)
+            } else {
+                Toast.makeText(context, "Gagal menyimpan foto", Toast.LENGTH_SHORT).show()
+            }
         } else {
             Toast.makeText(context, "Foto tidak diambil", Toast.LENGTH_SHORT).show()
         }
@@ -92,7 +121,8 @@ fun UploadPhotoScreen(
                 val bitmap = BitmapFactory.decodeStream(it)
                 selectedBitmap = bitmap
             }
-            onResult(selectedBitmap, uri)
+            // Langsung navigate ke PhotoDetail
+            onPhotoSelected(uri)
         } else {
             Toast.makeText(context, "Tidak ada foto yang dipilih", Toast.LENGTH_SHORT).show()
         }
@@ -224,13 +254,6 @@ fun UploadPhotoScreen(
                                 .padding(8.dp)
                         )
                     }
-                } else if (selectedUri != null) {
-                    // fallback - jika kita hanya punya uri, kita sudah set bitmap saat load, tapi tetap safe
-                    Text(
-                        text = "Preview tersedia",
-                        color = CreamWhite,
-                        modifier = Modifier.padding(8.dp)
-                    )
                 } else {
                     // Placeholder illustration area
                     Box(
@@ -301,32 +324,6 @@ fun UploadPhotoScreen(
                         requestPermissionFor(Action.GALLERY)
                     }
                 )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Opsional: tombol "Lanjut" untuk submit / ke halaman detail
-                Button(
-                    onClick = {
-                        // panggil callback onResult jika ada foto
-                        if (selectedBitmap != null || selectedUri != null) {
-                            onResult(selectedBitmap, selectedUri)
-                            Toast
-                                .makeText(context, "Foto siap di proses", Toast.LENGTH_SHORT)
-                                .show()
-                        } else {
-                            Toast
-                                .makeText(context, "Pilih atau ambil foto terlebih dahulu", Toast.LENGTH_SHORT)
-                                .show()
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MediumGreen),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Text(text = "Lanjutkan", color = Color.White, fontWeight = FontWeight.Bold)
-                }
             }
         }
     }
