@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose") // Tambahkan ini
 }
 
 android {
@@ -40,10 +39,9 @@ android {
     buildFeatures {
         compose = true
     }
-    // HAPUS bagian composeOptions ini karena tidak diperlukan lagi dengan Kotlin 2.0+
-    // composeOptions {
-    //     kotlinCompilerExtensionVersion = "1.5.1"
-    // }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.1"
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
