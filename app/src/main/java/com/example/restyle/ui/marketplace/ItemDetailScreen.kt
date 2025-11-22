@@ -12,6 +12,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,6 +26,10 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.restyle.data.model.Photo
 import java.text.SimpleDateFormat
 import java.util.*
+import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -146,6 +152,17 @@ fun ItemDetailScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                var sellerName by remember { mutableStateOf<String?>(null) }
+                LaunchedEffect(photo.userId) {
+                    FirebaseAuth.getInstance().currentUser?.let { currentUser ->
+                        if (currentUser.uid == photo.userId) {
+                            sellerName = currentUser.displayName ?: "Unknown User"
+                        } else {
+                            sellerName = "Seller ${photo.userId.take(8)}"
+                        }
+                    }
+                }
+
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -179,7 +196,7 @@ fun ItemDetailScreen(
 
                         Column {
                             Text(
-                                text = photo.userId,
+                                text = sellerName ?: "Loading...",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color(0xFF2D2D2D)

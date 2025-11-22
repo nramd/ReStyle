@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.restyle.data.model.Photo
 import com.example.restyle.data.repository.PhotoRepository
+import com.example.restyle.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +19,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private val photoRepository = PhotoRepository(application.applicationContext)
+    private val authRepository = AuthRepository()
 
     private val _myResellItems = MutableStateFlow<List<Photo>>(emptyList())
     val myResellItems: StateFlow<List<Photo>> = _myResellItems.asStateFlow()
@@ -33,12 +35,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
+                val currentUserId = authRepository.getCurrentUserId() // GET CURRENT USER ID
                 photoRepository.getPhotosByCategory("Resell").collect { photos ->
-                    // Filter by current user (nanti akan pakai userId dari auth)
-                    val myPhotos = photos.filter { it.userId == "default_user" }
+                    // Filter by current user
+                    val myPhotos = photos.filter { it.userId == currentUserId }
                     _myResellItems.value = myPhotos
                     _isLoading.value = false
-                    Log.d(TAG, "Loaded ${myPhotos.size} resell items")
+                    Log.d(TAG, "Loaded ${myPhotos.size} resell items for user $currentUserId")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading resell items", e)

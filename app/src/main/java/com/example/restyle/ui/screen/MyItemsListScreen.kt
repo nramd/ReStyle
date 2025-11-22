@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Refresh
 fun MyItemsListScreen(
     onNavigateBack: () -> Unit,
     onItemClick: (Photo) -> Unit = {},
+    userId: String = "default_user",
     viewModel: HomeViewModel = viewModel()
 ) {
     val myResellItems by viewModel.myResellItems.collectAsState()

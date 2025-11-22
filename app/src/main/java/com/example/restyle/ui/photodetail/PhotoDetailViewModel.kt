@@ -46,7 +46,10 @@ class PhotoDetailViewModel(application: Application) : AndroidViewModel(applicat
 
     fun savePhoto(
         imageUri: Uri,
-        category: String = "Resell",
+        title: String,
+        description: String,
+        category: String,
+        price: Long = 0,
         userId: String = "default_user"
     ) {
         viewModelScope.launch {
@@ -64,13 +67,12 @@ class PhotoDetailViewModel(application: Application) : AndroidViewModel(applicat
                     }
 
                     is UploadResult.Success -> {
-                        // Foto berhasil diupload, simpan metadata ke Firestore
                         val photo = Photo(
                             imageUrl = result.downloadUrl,
-                            title = _title.value,
-                            description = _description.value,
+                            title = title,
+                            description = description,
                             category = category,
-                            price = if (category == "Resell") _price.value.toLongOrNull() ?: 0 else 0,
+                            price = price,
                             userId = userId
                         )
 

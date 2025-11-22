@@ -42,6 +42,7 @@ fun PickupLocationScreen(
     description: String,
     category: String,
     onNavigateBack: () -> Unit,
+    userId: String = "default_user",
     viewModel: PickupLocationViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -284,7 +285,8 @@ fun PickupLocationScreen(
                             imageUri = imageUri,
                             title = title,
                             description = description,
-                            category = category
+                            category = category,
+                            userId = userId // PASS USER ID
                         )
                     }
                 },

@@ -50,34 +50,78 @@ import com.example.restyle.ui.photodetail.PhotoDetailScreen
 import com.example.restyle.ui.pickup.PickupLocationScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
-import com.example.restyle.ui.screen.HomeViewModel
 import com.example.restyle.data.model.Photo
 import androidx.compose.foundation.Image
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.layout.ContentScale
-import com.example.restyle.ui.screen.MyItemsListScreen
 import androidx.compose.runtime.LaunchedEffect
 import com.example.restyle.ui.marketplace.MarketplaceScreen
 import com.example.restyle.ui.marketplace.ItemDetailScreen
 import com.example.restyle.ui.marketplace.MarketplaceViewModel
-import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Button
+import com.example.restyle.ui.auth.AuthViewModel
+import com.example.restyle.ui.auth.LoginScreen
+import com.example.restyle.ui.auth.RegisterScreen
+import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Person
 
 
 @Composable
 fun HomeScreen() {
     val navController = rememberNavController()
+    val authViewModel: AuthViewModel = viewModel()
+    val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
 
     NavHost(
         navController = navController,
-        startDestination = "home"
+        startDestination = if (isLoggedIn) "home" else "login"
     ) {
+        // Route: Login (BARU)
+        composable("login") {
+            LoginScreen(
+                onNavigateToRegister = {
+                    navController.navigate("register")
+                },
+                onLoginSuccess = {
+                    navController.navigate("home") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                viewModel = authViewModel
+            )
+        }
+
+        // Route: Register (BARU)
+        composable("register") {
+            RegisterScreen(
+                onNavigateToLogin = {
+                    navController.navigate("login") {
+                        popUpTo("register") { inclusive = true }
+                    }
+                },
+                onRegisterSuccess = {
+                    navController.navigate("home") {
+                        popUpTo("register") { inclusive = true }
+                    }
+                },
+                viewModel = authViewModel
+            )
+        }
+
         // Route: Home
         composable("home") {
-            HomeContent(navController = navController)
+            HomeContent(
+                navController = navController,
+                authViewModel = authViewModel
+            )
         }
 
         // Route: Upload Photo
@@ -94,6 +138,7 @@ fun HomeScreen() {
             )
         }
 
+        // Route: Photo Detail
         composable(
             route = "photo_detail/{imageUri}/{category}",
             arguments = listOf(
@@ -119,10 +164,12 @@ fun HomeScreen() {
                     val encodedTitle = Uri.encode(title)
                     val encodedDesc = Uri.encode(desc)
                     navController.navigate("pickup_location/$encodedUri/$encodedTitle/$encodedDesc/$cat")
-                }
+                },
+                userId = authViewModel.getCurrentUserId() // PASS REAL USER ID
             )
         }
 
+        // Route: Pickup Location
         composable(
             route = "pickup_location/{imageUri}/{title}/{description}/{category}",
             arguments = listOf(
@@ -145,19 +192,24 @@ fun HomeScreen() {
                 category = category,
                 onNavigateBack = {
                     navController.popBackStack("home", inclusive = false)
-                }
+                },
+                userId = authViewModel.getCurrentUserId() // PASS REAL USER ID
             )
         }
-        // Route: My-items
+
+        // Route: My Items List
         composable("my_items_list") {
             MyItemsListScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
                 onItemClick = { photo ->
-                }
+                    navController.navigate("item_detail/${photo.id}")
+                },
+                userId = authViewModel.getCurrentUserId() // PASS REAL USER ID
             )
         }
+
         // Route: Marketplace
         composable("marketplace") {
             MarketplaceScreen(
@@ -169,6 +221,7 @@ fun HomeScreen() {
                 }
             )
         }
+
         // Route: Item Detail
         composable(
             route = "item_detail/{itemId}",
@@ -213,18 +266,28 @@ fun HomeScreen() {
 @Composable
 fun HomeContent(
     navController: NavController,
-    viewModel: HomeViewModel = viewModel()
+    viewModel: HomeViewModel = viewModel(),
+    authViewModel: AuthViewModel // TAMBAHKAN PARAMETER INI
 ) {
     val myResellItems by viewModel.myResellItems.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
+    // Auto refresh saat screen muncul
     LaunchedEffect(Unit) {
         viewModel.refreshItems()
     }
 
     Scaffold(
         topBar = {
-            TopBar()
+            TopBar(
+                authViewModel = authViewModel,
+                onLogout = {
+                    authViewModel.logout()
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
     ) { paddingValues ->
         Column(
@@ -260,19 +323,29 @@ fun HomeContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar() {
+fun TopBar(
+    authViewModel: AuthViewModel,
+    onLogout: () -> Unit
+) {
+    val currentUser = authViewModel.authState.collectAsState().value.user
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
     TopAppBar(
         title = {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
+            Column {
                 Text(
                     text = "Restyle",
-                    fontSize = 28.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF6FCF97)
                 )
+                currentUser?.displayName?.let { name ->
+                    Text(
+                        text = "Hi, $name!",
+                        fontSize = 12.sp,
+                        color = Color(0xFF9E9E9E)
+                    )
+                }
             }
         },
         navigationIcon = {
@@ -292,11 +365,42 @@ fun TopBar() {
                     tint = Color(0xFF2D2D2D)
                 )
             }
+            IconButton(onClick = { showLogoutDialog = true }) {
+                Icon(
+                    imageVector = Icons.Default.ExitToApp,
+                    contentDescription = "Profile",
+                    tint = Color(0xFFFF6B6B)
+                )
+            }
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.White
         )
     )
+
+    // Logout Confirmation Dialog
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to logout?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogout()
+                    }
+                ) {
+                    Text("Logout", color = Color(0xFFFF6B6B))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -608,6 +712,10 @@ fun FeatureButton(
 fun HomeScreenPreview() {
     MaterialTheme {
         val navController = rememberNavController()
-        HomeContent(navController = navController)
+        val authViewModel: AuthViewModel = viewModel()
+        HomeContent(
+            navController = navController,
+            authViewModel = authViewModel
+        )
     }
 }

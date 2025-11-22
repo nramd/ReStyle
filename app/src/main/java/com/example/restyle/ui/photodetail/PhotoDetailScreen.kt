@@ -30,6 +30,7 @@ fun PhotoDetailScreen(
     category: String = "Resell",
     onNavigateBack: () -> Unit,
     onNavigateToPickup: (Uri, String, String, String) -> Unit,
+    userId: String = "default_user",
     viewModel: PhotoDetailViewModel = viewModel()
 ) {
     val uploadState by viewModel.uploadState.collectAsState()
@@ -154,7 +155,17 @@ fun PhotoDetailScreen(
                     if (imageUri != null && title.isNotBlank()) {
                         when (category) {
                             "Resell" -> {
-                                viewModel.savePhoto(imageUri, category)
+                                val priceValue = price.toLongOrNull() ?: 0L
+                                if (priceValue > 0) {
+                                    viewModel.savePhoto(
+                                        imageUri = imageUri,
+                                        title = title,
+                                        description = description,
+                                        category = category,
+                                        price = priceValue,
+                                        userId = userId
+                                    )
+                                }
                             }
                             "Donate", "Recycle" -> {
                                 onNavigateToPickup(imageUri, title, description, category)
@@ -166,7 +177,7 @@ fun PhotoDetailScreen(
                     .fillMaxWidth()
                     .height(50.dp),
                 enabled = !uploadState.isLoading && title.isNotBlank() &&
-                        (category != "Resell" || price.isNotBlank())
+                        (category != "Resell" || (price.isNotBlank() && price.toLongOrNull() != null && price.toLong() > 0))
             ) {
                 if (uploadState.isLoading) {
                     CircularProgressIndicator(
