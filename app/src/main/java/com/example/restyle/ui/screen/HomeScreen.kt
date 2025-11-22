@@ -22,6 +22,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
 
+/**
+ * HomeScreen adalah layar utama aplikasi ReStyle yang menampilkan:
+ * - Loyalty card dengan informasi koleksi pakaian user
+ * - Grid fitur utama (Marketplace, Resell, Donate, Recycle)
+ * - Navigation ke layar lain
+ */
 @Composable
 fun HomeScreen() {
     val navController = rememberNavController()
@@ -85,6 +91,12 @@ fun HomeContent(navController: NavController) {
     }
 }
 
+/**
+ * TopBar menampilkan header aplikasi dengan:
+ * - Notification icon (kiri)
+ * - Logo/judul Restyle (tengah)
+ * - Shopping cart icon (kanan)
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar() {
@@ -126,6 +138,13 @@ fun TopBar() {
     )
 }
 
+/**
+ * LoyaltyCard menampilkan card informasi koleksi pakaian user:
+ * - Jumlah item yang siap di-recycle
+ * - Impact points user
+ * - User name
+ * - Ilustrasi dekoratif dengan circle shapes
+ */
 @Composable
 fun LoyaltyCard() {
     Card(
@@ -271,6 +290,15 @@ fun LoyaltyCard() {
     }
 }
 
+/**
+ * FeatureGrid menampilkan grid 2x2 dengan 4 fitur utama:
+ * - Marketplace: Browse dan beli pakaian second-hand
+ * - Resell: Jual pakaian yang tidak dipakai
+ * - Donate: Donasikan pakaian untuk yang membutuhkan
+ * - Recycle: Recycle limbah pakaian menjadi produk baru
+ * 
+ * @param navController Navigation controller untuk navigasi ke layar lain
+ */
 @Composable
 fun FeatureGrid(navController: NavController) {
     Column {
@@ -322,6 +350,18 @@ fun FeatureGrid(navController: NavController) {
     }
 }
 
+/**
+ * FeatureButton adalah card button untuk setiap fitur di home screen.
+ * Card memiliki background warna yang berbeda untuk setiap fitur dan
+ * dilengkapi dengan decorative circles.
+ * 
+ * @param title Nama fitur
+ * @param icon Emoji icon untuk fitur
+ * @param backgroundColor Warna background card
+ * @param textColor Warna text judul
+ * @param modifier Modifier untuk customisasi layout
+ * @param onClick Callback saat card diklik
+ */
 @Composable
 fun FeatureButton(
     title: String,

@@ -31,28 +31,40 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.example.restyle.ui.theme.DarkGreen
+import com.example.restyle.ui.theme.MediumGreen
+import com.example.restyle.ui.theme.LightGreen
+import com.example.restyle.ui.theme.CreamWhite
 import java.io.InputStream
 
-// Warna Hijau Gelap Theme
-val DarkGreen = Color(0xFF2D5F3F)
-val MediumGreen = Color(0xFF3D7A52)
-val LightGreen = Color(0xFF6FCF97)
-val CreamWhite = Color(0xFFFFF8E7)
-
 /**
- * Enum Action harus dideklarasikan di luar fungsi composable (top-level),
- * karena Kotlin tidak mengizinkan enum local di dalam fungsi.
+ * Enum Action untuk menentukan tipe aksi yang akan dilakukan
+ * (Camera atau Gallery) saat request permission.
  */
 enum class Action {
     CAMERA, GALLERY
 }
 
+/**
+ * UploadPhotoScreen adalah layar untuk mengunggah foto item
+ * yang akan di-resell, donate, atau recycle.
+ * 
+ * Layar ini menangani:
+ * - Permission request untuk camera dan storage
+ * - Capture foto dari camera
+ * - Pilih foto dari gallery
+ * - Preview foto yang dipilih
+ * 
+ * @param featureType Tipe fitur: "Resell", "Donate", atau "Recycle"
+ * @param onBackClick Callback saat tombol back ditekan
+ * @param onResult Callback saat foto berhasil diambil/dipilih dengan Bitmap dan Uri
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UploadPhotoScreen(
-    featureType: String = "Resell", // "Resell", "Donate", atau "Recycle"
+    featureType: String = "Resell",
     onBackClick: () -> Unit = {},
-    onResult: (bitmap: Bitmap?, uri: Uri?) -> Unit = { _, _ -> } // callback saat foto diambil/diupload
+    onResult: (bitmap: Bitmap?, uri: Uri?) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
 
@@ -332,6 +344,16 @@ fun UploadPhotoScreen(
     }
 }
 
+/**
+ * ActionButton adalah komponen button yang digunakan untuk
+ * action seperti Camera dan Upload Photo.
+ * 
+ * @param text Label button
+ * @param icon Icon yang ditampilkan di button
+ * @param backgroundColor Warna background button
+ * @param textColor Warna text dan icon
+ * @param onClick Callback saat button diklik
+ */
 @Composable
 fun ActionButton(
     text: String,
