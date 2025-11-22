@@ -73,7 +73,7 @@ class PhotoDetailViewModel(application: Application) : AndroidViewModel(applicat
                             description = description,
                             category = category,
                             price = price,
-                            userId = userId
+                            userId = userId,
                         )
 
                         photoRepository.savePhoto(photo).fold(
