@@ -1,0 +1,49 @@
+<resources>
+    <string name="app_name">ReStyle</string>
+    
+    <!-- Home Screen -->
+    <string name="home_title">Restyle</string>
+    <string name="home_features">Fitur</string>
+    <string name="notification">Notifikasi</string>
+    <string name="shopping_cart">Keranjang Belanja</string>
+    
+    <!-- Loyalty Card -->
+    <string name="loyalty_clothing_collection">Koleksi Pakaian</string>
+    <string name="loyalty_items_count">%d Item</string>
+    <string name="loyalty_ready_to_recycle">Siap untuk didaur ulang</string>
+    <string name="loyalty_your_impact">Dampak Anda</string>
+    <string name="loyalty_user_name">Henry Moore</string>
+    
+    <!-- Features -->
+    <string name="feature_marketplace">Marketplace</string>
+    <string name="feature_resell">Jual Lagi</string>
+    <string name="feature_donate">Donasi</string>
+    <string name="feature_recycle">Daur Ulang</string>
+    
+    <!-- Upload Screen -->
+    <string name="upload_resell_title">Jual Item</string>
+    <string name="upload_donate_title">Donasi Item</string>
+    <string name="upload_recycle_title">Daur Ulang Item</string>
+    <string name="upload_back">Kembali</string>
+    <string name="upload_camera">Kamera</string>
+    <string name="upload_photo">Upload Foto</string>
+    <string name="upload_continue">Lanjutkan</string>
+    
+    <!-- Upload Messages -->
+    <string name="upload_resell_message">Upload foto barang yang ingin dijual</string>
+    <string name="upload_donate_message">Upload foto barang yang ingin didonasikan</string>
+    <string name="upload_recycle_message">Upload foto limbah baju untuk didaur ulang</string>
+    <string name="upload_ai_analysis">Analisis kondisi dan prediksi\nberbasis AI</string>
+    <string name="upload_preview_available">Preview tersedia</string>
+    
+    <!-- Toasts and Messages -->
+    <string name="toast_no_photo_taken">Foto tidak diambil</string>
+    <string name="toast_no_photo_selected">Tidak ada foto yang dipilih</string>
+    <string name="toast_permission_required">Izin diperlukan untuk melanjutkan</string>
+    <string name="toast_photo_ready">Foto siap diproses</string>
+    <string name="toast_select_photo_first">Pilih atau ambil foto terlebih dahulu</string>
+    
+    <!-- Content Descriptions -->
+    <string name="cd_details">Detail</string>
+    <string name="cd_preview">Preview</string>
+</resources>

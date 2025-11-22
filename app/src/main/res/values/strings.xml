@@ -25,23 +25,23 @@
     <string name="upload_donate_title">Donate Item</string>
     <string name="upload_recycle_title">Recycle Item</string>
     <string name="upload_back">Back</string>
-    <string name="upload_camera">Kamera</string>
-    <string name="upload_photo">Upload Foto</string>
-    <string name="upload_continue">Lanjutkan</string>
+    <string name="upload_camera">Camera</string>
+    <string name="upload_photo">Upload Photo</string>
+    <string name="upload_continue">Continue</string>
     
     <!-- Upload Messages -->
-    <string name="upload_resell_message">Upload foto barang yang ingin dijual</string>
-    <string name="upload_donate_message">Upload foto barang yang ingin didonasikan</string>
-    <string name="upload_recycle_message">Upload foto limbah baju untuk didaur ulang</string>
-    <string name="upload_ai_analysis">Analisis kondisi dan prediksi\nberbasis AI</string>
-    <string name="upload_preview_available">Preview tersedia</string>
+    <string name="upload_resell_message">Upload a photo of the item you want to resell</string>
+    <string name="upload_donate_message">Upload a photo of the item you want to donate</string>
+    <string name="upload_recycle_message">Upload a photo of clothing waste to recycle</string>
+    <string name="upload_ai_analysis">AI-based condition analysis\nand prediction</string>
+    <string name="upload_preview_available">Preview available</string>
     
     <!-- Toasts and Messages -->
-    <string name="toast_no_photo_taken">Foto tidak diambil</string>
-    <string name="toast_no_photo_selected">Tidak ada foto yang dipilih</string>
-    <string name="toast_permission_required">Izin diperlukan untuk melanjutkan</string>
-    <string name="toast_photo_ready">Foto siap di proses</string>
-    <string name="toast_select_photo_first">Pilih atau ambil foto terlebih dahulu</string>
+    <string name="toast_no_photo_taken">Photo not taken</string>
+    <string name="toast_no_photo_selected">No photo selected</string>
+    <string name="toast_permission_required">Permission required to continue</string>
+    <string name="toast_photo_ready">Photo ready to process</string>
+    <string name="toast_select_photo_first">Select or take a photo first</string>
     
     <!-- Content Descriptions -->
     <string name="cd_details">Details</string>
