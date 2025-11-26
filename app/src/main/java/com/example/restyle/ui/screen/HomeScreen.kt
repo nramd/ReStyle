@@ -1,78 +1,46 @@
 package com.example.restyle.ui.screen
 
 import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.restyle.ui.photodetail.PhotoDetailScreen
-import com.example.restyle.ui.pickup.PickupLocationScreen
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.restyle.data.model.Photo
-import androidx.compose.foundation.Image
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.runtime.LaunchedEffect
-import com.example.restyle.ui.marketplace.MarketplaceScreen
-import com.example.restyle.ui.marketplace.ItemDetailScreen
-import com.example.restyle.ui.marketplace.MarketplaceViewModel
-import androidx.compose.material3.Button
 import com.example.restyle.ui.auth.AuthViewModel
 import com.example.restyle.ui.auth.LoginScreen
 import com.example.restyle.ui.auth.RegisterScreen
-import androidx.compose.material3.AlertDialog
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.material.icons.filled.Person
-
+import com.example.restyle.ui.marketplace.ItemDetailScreen
+import com.example.restyle.ui.marketplace.MarketplaceScreen
+import com.example.restyle.ui.marketplace.MarketplaceViewModel
+import com.example.restyle.ui.photodetail.PhotoDetailScreen
+import com.example.restyle.ui.pickup.PickupLocationScreen
 
 @Composable
 fun HomeScreen() {
@@ -84,7 +52,7 @@ fun HomeScreen() {
         navController = navController,
         startDestination = if (isLoggedIn) "home" else "login"
     ) {
-        // Route: Login (BARU)
+        // Route: Login
         composable("login") {
             LoginScreen(
                 onNavigateToRegister = {
@@ -99,7 +67,7 @@ fun HomeScreen() {
             )
         }
 
-        // Route: Register (BARU)
+        // Route: Register
         composable("register") {
             RegisterScreen(
                 onNavigateToLogin = {
@@ -124,6 +92,7 @@ fun HomeScreen() {
             )
         }
 
+        // --- BAGIAN YANG DIPERBAIKI ---
         // Route: Upload Photo
         composable("upload/{type}") { backStackEntry ->
             val type = backStackEntry.arguments?.getString("type") ?: "Resell"
@@ -131,14 +100,22 @@ fun HomeScreen() {
             UploadPhotoScreen(
                 featureType = type,
                 onBackClick = { navController.popBackStack() },
-                onPhotoSelected = { uri ->
+                // PERBAIKAN: Gunakan onSubmit, bukan onPhotoSelected
+                onSubmit = { uri, title, price, description ->
                     val encodedUri = Uri.encode(uri.toString())
-                    navController.navigate("photo_detail/$encodedUri/$type")
+                    val encodedTitle = Uri.encode(title)
+                    val encodedDesc = Uri.encode(description)
+                    // Note: 'price' saat ini belum masuk ke route pickup,
+                    // Anda bisa menambahkannya ke route pickup nanti jika perlu.
+
+                    // Langsung ke Pickup Location (Melewati PhotoDetail karena form sudah diisi)
+                    navController.navigate("pickup_location/$encodedUri/$encodedTitle/$encodedDesc/$type")
                 }
             )
         }
+        // -----------------------------
 
-        // Route: Photo Detail
+        // Route: Photo Detail (Mungkin tidak terpakai lagi dengan alur baru, tapi dibiarkan aman)
         composable(
             route = "photo_detail/{imageUri}/{category}",
             arguments = listOf(
@@ -165,7 +142,7 @@ fun HomeScreen() {
                     val encodedDesc = Uri.encode(desc)
                     navController.navigate("pickup_location/$encodedUri/$encodedTitle/$encodedDesc/$cat")
                 },
-                userId = authViewModel.getCurrentUserId() // PASS REAL USER ID
+                userId = authViewModel.getCurrentUserId()
             )
         }
 
@@ -193,7 +170,7 @@ fun HomeScreen() {
                 onNavigateBack = {
                     navController.popBackStack("home", inclusive = false)
                 },
-                userId = authViewModel.getCurrentUserId() // PASS REAL USER ID
+                userId = authViewModel.getCurrentUserId()
             )
         }
 
@@ -206,7 +183,7 @@ fun HomeScreen() {
                 onItemClick = { photo ->
                     navController.navigate("item_detail/${photo.id}")
                 },
-                userId = authViewModel.getCurrentUserId() // PASS REAL USER ID
+                userId = authViewModel.getCurrentUserId()
             )
         }
 
@@ -267,7 +244,7 @@ fun HomeScreen() {
 fun HomeContent(
     navController: NavController,
     viewModel: HomeViewModel = viewModel(),
-    authViewModel: AuthViewModel // TAMBAHKAN PARAMETER INI
+    authViewModel: AuthViewModel
 ) {
     val myResellItems by viewModel.myResellItems.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -368,7 +345,7 @@ fun TopBar(
             IconButton(onClick = { showLogoutDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.ExitToApp,
-                    contentDescription = "Profile",
+                    contentDescription = "Logout",
                     tint = Color(0xFFFF6B6B)
                 )
             }
