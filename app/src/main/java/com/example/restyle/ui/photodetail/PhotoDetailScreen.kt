@@ -155,14 +155,20 @@ fun PhotoDetailScreen(
                     if (imageUri != null && title.isNotBlank()) {
                         when (category) {
                             "Resell" -> {
-                                val priceValue = price.toLongOrNull() ?: 0L
+                                // --- PERBAIKAN DI SINI ---
+                                // 1. Hapus titik dan koma sebelum konversi
+                                val cleanPrice = price.replace(".", "").replace(",", "").trim()
+
+                                // 2. Konversi ke Long
+                                val priceValue = cleanPrice.toLongOrNull() ?: 0L
+                                android.util.Log.d("DEBUG_PRICE", "Input: $price, Clean: $cleanPrice, Value: $priceValue")
                                 if (priceValue > 0) {
                                     viewModel.savePhoto(
                                         imageUri = imageUri,
                                         title = title,
                                         description = description,
                                         category = category,
-                                        price = priceValue,
+                                        price = priceValue, // Masukkan value yang sudah bersih
                                         userId = userId
                                     )
                                 }

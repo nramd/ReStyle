@@ -2,12 +2,10 @@ package com.example.restyle.ui.pickup
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.location.Geocoder
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,8 +19,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -30,9 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
-import com.google.android.gms.location.LocationServices
-import java.util.Locale
-import com.example.restyle.ui.pickup.LocationData
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +34,7 @@ fun PickupLocationScreen(
     title: String,
     description: String,
     category: String,
+    price: Long, // <--- 1. ADDED PRICE PARAMETER HERE
     onNavigateBack: () -> Unit,
     userId: String = "default_user",
     viewModel: PickupLocationViewModel = viewModel()
@@ -100,7 +94,7 @@ fun PickupLocationScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Preview Foto
+            // Preview Photo
             if (imageUri != null) {
                 Card(
                     modifier = Modifier
@@ -140,6 +134,16 @@ fun PickupLocationScreen(
                             text = description,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    // Optional: Show Price if it exists
+                    if (price > 0) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Value: Rp $price",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -286,7 +290,8 @@ fun PickupLocationScreen(
                             title = title,
                             description = description,
                             category = category,
-                            userId = userId // PASS USER ID
+                            price = price, // <--- 2. PASSING PRICE TO VIEWMODEL HERE
+                            userId = userId
                         )
                     }
                 },

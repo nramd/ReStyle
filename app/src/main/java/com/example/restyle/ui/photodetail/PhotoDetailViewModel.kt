@@ -31,10 +31,15 @@ class PhotoDetailViewModel(application: Application) : AndroidViewModel(applicat
     val description: StateFlow<String> = _description.asStateFlow()
 
     fun onPriceChange(newPrice: String) {
-        if (newPrice.isEmpty() || newPrice.all { it.isDigit() }) {
-            _price.value = newPrice
+        // bersihkan titik / koma / spasi
+        val clean = newPrice.replace(".", "").replace(",", "").trim()
+
+        // hanya angka yang diizinkan
+        if (clean.isEmpty() || clean.all { it.isDigit() }) {
+            _price.value = clean
         }
     }
+
 
     fun onTitleChange(newTitle: String) {
         _title.value = newTitle

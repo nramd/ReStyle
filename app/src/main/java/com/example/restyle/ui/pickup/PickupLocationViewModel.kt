@@ -85,25 +85,24 @@ class PickupLocationViewModel(application: Application) : AndroidViewModel(appli
                 if (!addresses.isNullOrEmpty()) {
                     val address = addresses[0]
                     val addressText = buildString {
-                        // Get detailed address
                         if (!address.thoroughfare.isNullOrEmpty()) {
-                            append(address.thoroughfare) // Street name
+                            append(address.thoroughfare)
                         }
                         if (!address.subLocality.isNullOrEmpty()) {
                             if (isNotEmpty()) append(", ")
-                            append(address.subLocality) // District
+                            append(address.subLocality)
                         }
                         if (!address.locality.isNullOrEmpty()) {
                             if (isNotEmpty()) append(", ")
-                            append(address.locality) // City
+                            append(address.locality)
                         }
                         if (!address.adminArea.isNullOrEmpty()) {
                             if (isNotEmpty()) append(", ")
-                            append(address.adminArea) // Province
+                            append(address.adminArea)
                         }
                         if (!address.postalCode.isNullOrEmpty()) {
                             if (isNotEmpty()) append(" ")
-                            append(address.postalCode) // Postal code
+                            append(address.postalCode)
                         }
                     }
 
@@ -122,11 +121,13 @@ class PickupLocationViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    // --- UPDATE IS HERE ---
     fun savePhotoWithLocation(
         imageUri: Uri,
         title: String,
         description: String,
         category: String,
+        price: Long, // <--- 1. Added price parameter
         userId: String = "default_user"
     ) {
         val currentLocation = _location.value
@@ -144,7 +145,7 @@ class PickupLocationViewModel(application: Application) : AndroidViewModel(appli
             _uploadState.value = PhotoUploadState(isLoading = true, uploadProgress = 0)
 
             try {
-                // Upload foto ke Storage
+                // Upload photo to Storage
                 storageRepository.uploadPhoto(imageUri, userId, category).collect { result ->
                     when (result) {
                         is UploadResult.Progress -> {
@@ -158,12 +159,13 @@ class PickupLocationViewModel(application: Application) : AndroidViewModel(appli
                         is UploadResult.Success -> {
                             Log.d(TAG, "Upload success! Saving to Firestore...")
 
-                            // Simpan metadata ke Firestore dengan lokasi
+                            // Save metadata to Firestore including price
                             val photo = Photo(
                                 imageUrl = result.downloadUrl,
                                 title = title,
                                 description = description,
                                 category = category,
+                                price = price, // <--- 2. Added price to Photo object
                                 pickupLocation = _address.value,
                                 pickupLat = currentLocation.latitude,
                                 pickupLng = currentLocation.longitude,

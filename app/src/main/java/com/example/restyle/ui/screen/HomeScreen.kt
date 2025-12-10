@@ -9,10 +9,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -92,30 +90,57 @@ fun HomeScreen() {
             )
         }
 
-        // --- BAGIAN YANG DIPERBAIKI ---
-        // Route: Upload Photo
+        // --- UPDATE PENTING: Upload Photo ---
         composable("upload/{type}") { backStackEntry ->
             val type = backStackEntry.arguments?.getString("type") ?: "Resell"
 
             UploadPhotoScreen(
                 featureType = type,
                 onBackClick = { navController.popBackStack() },
-                // PERBAIKAN: Gunakan onSubmit, bukan onPhotoSelected
                 onSubmit = { uri, title, price, description ->
                     val encodedUri = Uri.encode(uri.toString())
                     val encodedTitle = Uri.encode(title)
                     val encodedDesc = Uri.encode(description)
-                    // Note: 'price' saat ini belum masuk ke route pickup,
-                    // Anda bisa menambahkannya ke route pickup nanti jika perlu.
 
-                    // Langsung ke Pickup Location (Melewati PhotoDetail karena form sudah diisi)
-                    navController.navigate("pickup_location/$encodedUri/$encodedTitle/$encodedDesc/$type")
+                    // PERBAIKAN: Price (Long) dikirim lewat navigasi
+                    navController.navigate("pickup_location/$encodedUri/$encodedTitle/$encodedDesc/$type/$price")
                 }
             )
         }
-        // -----------------------------
 
-        // Route: Photo Detail (Mungkin tidak terpakai lagi dengan alur baru, tapi dibiarkan aman)
+        // --- UPDATE PENTING: Pickup Location ---
+        composable(
+            route = "pickup_location/{imageUri}/{title}/{description}/{category}/{price}",
+            arguments = listOf(
+                navArgument("imageUri") { type = NavType.StringType },
+                navArgument("title") { type = NavType.StringType },
+                navArgument("description") { type = NavType.StringType },
+                navArgument("category") { type = NavType.StringType },
+                navArgument("price") { type = NavType.LongType } // Terima argument Price
+            )
+        ) { backStackEntry ->
+            val imageUriString = backStackEntry.arguments?.getString("imageUri")
+            val title = backStackEntry.arguments?.getString("title") ?: ""
+            val description = backStackEntry.arguments?.getString("description") ?: ""
+            val category = backStackEntry.arguments?.getString("category") ?: "Donate"
+            val price = backStackEntry.arguments?.getLong("price") ?: 0L // Ambil Price
+
+            val imageUri = imageUriString?.let { Uri.parse(it) }
+
+            PickupLocationScreen(
+                imageUri = imageUri,
+                title = title,
+                description = description,
+                category = category,
+                price = price, // Kirim price ke Screen Pickup
+                onNavigateBack = {
+                    navController.popBackStack("home", inclusive = false)
+                },
+                userId = authViewModel.getCurrentUserId()
+            )
+        }
+
+        // Route: Photo Detail (Optional / Legacy)
         composable(
             route = "photo_detail/{imageUri}/{category}",
             arguments = listOf(
@@ -130,45 +155,20 @@ fun HomeScreen() {
             val category = backStackEntry.arguments?.getString("category") ?: "Resell"
             val imageUri = imageUriString?.let { Uri.parse(it) }
 
+            // Note: Jika rute ini dipakai, pastikan PhotoDetailScreen logic-nya sesuai
             PhotoDetailScreen(
                 imageUri = imageUri,
                 category = category,
                 onNavigateBack = {
                     navController.popBackStack("home", inclusive = false)
                 },
+                // Jika dari detail mau ke pickup, logic price harus disesuaikan (disini default 0 dulu)
                 onNavigateToPickup = { uri, title, desc, cat ->
                     val encodedUri = Uri.encode(uri.toString())
                     val encodedTitle = Uri.encode(title)
                     val encodedDesc = Uri.encode(desc)
-                    navController.navigate("pickup_location/$encodedUri/$encodedTitle/$encodedDesc/$cat")
-                },
-                userId = authViewModel.getCurrentUserId()
-            )
-        }
-
-        // Route: Pickup Location
-        composable(
-            route = "pickup_location/{imageUri}/{title}/{description}/{category}",
-            arguments = listOf(
-                navArgument("imageUri") { type = NavType.StringType },
-                navArgument("title") { type = NavType.StringType },
-                navArgument("description") { type = NavType.StringType },
-                navArgument("category") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
-            val imageUriString = backStackEntry.arguments?.getString("imageUri")
-            val title = backStackEntry.arguments?.getString("title") ?: ""
-            val description = backStackEntry.arguments?.getString("description") ?: ""
-            val category = backStackEntry.arguments?.getString("category") ?: "Donate"
-            val imageUri = imageUriString?.let { Uri.parse(it) }
-
-            PickupLocationScreen(
-                imageUri = imageUri,
-                title = title,
-                description = description,
-                category = category,
-                onNavigateBack = {
-                    navController.popBackStack("home", inclusive = false)
+                    val defaultPrice = 0L
+                    navController.navigate("pickup_location/$encodedUri/$encodedTitle/$encodedDesc/$cat/$defaultPrice")
                 },
                 userId = authViewModel.getCurrentUserId()
             )
@@ -243,7 +243,7 @@ fun HomeScreen() {
 @Composable
 fun HomeContent(
     navController: NavController,
-    viewModel: HomeViewModel = viewModel(),
+    viewModel: HomeViewModel = viewModel(), // Menggunakan HomeViewModel yang baru dibuat
     authViewModel: AuthViewModel
 ) {
     val myResellItems by viewModel.myResellItems.collectAsState()
@@ -344,7 +344,7 @@ fun TopBar(
             }
             IconButton(onClick = { showLogoutDialog = true }) {
                 Icon(
-                    imageVector = Icons.Default.ExitToApp,
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                     contentDescription = "Logout",
                     tint = Color(0xFFFF6B6B)
                 )
@@ -355,7 +355,6 @@ fun TopBar(
         )
     )
 
-    // Logout Confirmation Dialog
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
@@ -402,7 +401,6 @@ fun MyItemsSection(
                 .padding(20.dp)
         ) {
             if (isLoading) {
-                // Loading State
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -414,7 +412,6 @@ fun MyItemsSection(
                 }
             } else {
                 Column {
-                    // Header
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -428,10 +425,7 @@ fun MyItemsSection(
                                 color = Color(0xFF2D2D2D)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "🏪",
-                                fontSize = 20.sp
-                            )
+                            Text(text = "🏪", fontSize = 20.sp)
                         }
 
                         if (items.isNotEmpty()) {
@@ -453,7 +447,6 @@ fun MyItemsSection(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     if (items.isEmpty()) {
-                        // Empty State
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
@@ -487,15 +480,11 @@ fun MyItemsSection(
                             }
                         }
                     } else {
-                        // Items Preview (3 photos + count)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Show first 3 photos
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 items.take(3).forEach { photo ->
                                     Card(
                                         modifier = Modifier.size(60.dp),
@@ -514,7 +503,6 @@ fun MyItemsSection(
 
                             Spacer(modifier = Modifier.width(16.dp))
 
-                            // Item Count & Info
                             Column {
                                 Text(
                                     text = "${items.size} Item${if (items.size > 1) "s" else ""}",
@@ -523,7 +511,6 @@ fun MyItemsSection(
                                     color = Color(0xFF2D2D2D)
                                 )
 
-                                // Calculate total value
                                 val totalValue = items.sumOf { it.price }
                                 if (totalValue > 0) {
                                     Text(
@@ -668,7 +655,6 @@ fun FeatureButton(
                         fontWeight = FontWeight.Bold,
                         color = textColor
                     )
-
                     Box(
                         modifier = Modifier
                             .width(40.dp)
@@ -681,18 +667,5 @@ fun FeatureButton(
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun HomeScreenPreview() {
-    MaterialTheme {
-        val navController = rememberNavController()
-        val authViewModel: AuthViewModel = viewModel()
-        HomeContent(
-            navController = navController,
-            authViewModel = authViewModel
-        )
     }
 }
